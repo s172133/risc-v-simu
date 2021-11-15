@@ -9,7 +9,7 @@ int main(){
     uint32_t pc = 0; // Program counter
     uint32_t reg[32]; // Register
 
-    malloc( 42 * sizeof(uint32_t) ); // Allocate binary code
+    malloc( 10000 * sizeof(uint32_t) ); // Allocate binary code
 
     // OPEN FILE
     FILE *fp = fopen("binary.txt", "r");
@@ -19,7 +19,11 @@ int main(){
     }
 
 
-    int opcode;
+    uint32_t opcode;
+    uint32_t rd;
+    uint32_t rs1;
+    uint32_t imm;
+
     char str[40];
      while(pc != 10) {
          pc += 1;
