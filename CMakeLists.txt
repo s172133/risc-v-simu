@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.17.5)
 project(RISC_V C)
 
 set(CMAKE_C_STANDARD 11)
