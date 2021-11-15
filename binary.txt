@@ -1,7 +1,3 @@
-testing 
-and 
-showing
-add r1 a1 a2
-add r1 a1 a2
-sub r1 a1 a2
-mul r1 a1 a2
+0x00200093, // addi x1 x0 2
+0x00300113, // addi x2 x0 3
+0x002081b3, // add x3 x1 x2

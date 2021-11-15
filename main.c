@@ -1,8 +1,15 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 
 int main(){
     printf("********** Starting **********\n");
+
+    uint32_t pc = 0; // Program counter
+    uint32_t reg[3]; // Register
+
+    malloc(32);
+
 
     FILE *fp = fopen("binary.txt", "r");
 
