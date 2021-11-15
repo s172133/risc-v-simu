@@ -1,0 +1,7 @@
+testing 
+and 
+showing
+add r1 a1 a2
+add r1 a1 a2
+sub r1 a1 a2
+mul r1 a1 a2
