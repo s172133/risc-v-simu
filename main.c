@@ -9,7 +9,8 @@ int main(){
     uint32_t pc = 0; // Program counter
     uint32_t reg[32]; // Register
 
-    malloc( 42 * sizeof(uint32_t) ); // Allocate binary code
+    uint32_t
+    memory = malloc( 42 * sizeof(uint32_t) ); // Allocate binary code
 
     // OPEN FILE
     FILE *fp = fopen("binary.txt", "r");
