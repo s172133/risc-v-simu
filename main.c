@@ -19,12 +19,115 @@ int main() {
 
     uint32_t pc = 0; // Program counter
     uint32_t reg[32]; // Register
-    uint32_t *memory = malloc(10000 * sizeof(uint8_t)); // Allocate binary code
+    for (int i = 0; i < 31; i++) {
+        reg[i] = 0;
+    }
+    uint32_t *memory = malloc(0xFFFFFFFF * sizeof(uint32_t)); // Allocate binary code
 
     readFile(memory);
 
-    for (int i = 0; i < 10; i++) {
-        printf("%x\n", memory[i*4]);
+    while(pc < 0x2c){
+        pc+=4;
+        uint32_t instr = memory[pc];
+        uint32_t opcode = instr & 0x7f;
+        uint32_t funct3 = (instr >> 12) & 0x3;
+        uint32_t funct7 = (instr >> 25) & 0x7F;
+        uint32_t rd = (instr >> 7) & 0x01f;
+        uint32_t rs1 = (instr >> 15) & 0x01f;
+        uint32_t rs2 = (instr >> 20) & 0x01f;
+        uint32_t imm12 = (instr >> 20);
+        uint32_t imm20 = (instr >> 12);
+        uint32_t part1 = (instr >> 12) & 0xFF;
+        uint32_t part2 = (instr >> 20) & 0x3FF;
+        uint32_t part3 = (instr >> 31);
+        uint32_t imm;
+        uint32_t jimm = part3 << 18| part1 << 10 | part2; //This might be wrong!!
+        printf("\nOpcode: %x\n", opcode);
+
+
+        switch (opcode) {
+            case 0x0: //Invalid opcode just skip
+                break;
+            case 0x3: //load
+                switch (funct3) {
+                    case 0x0: //LB
+                        //todo
+                        break;
+                    case 0x1: //LH
+                        //todo
+                        break;
+
+                    case 0x2: //LW
+                        if ((imm12 >> 11) == 1){
+                            imm12 += 0xFFFFF000;
+                        }
+                        printf("imm12: %x\n", imm12);
+                        reg[rd] = memory[reg[rs1]+imm12];
+                        printf("imm12: %x\n",  memory[reg[rs1]+imm12]);
+                        //todo
+                        break;
+                    case 0x4: //LBU
+                        //todo
+                        break;
+                    case 0x5: //LHU
+                        //todo
+                        break;
+                    default:
+                        printf("Invalid funct3");
+                }
+                //todo
+                break;
+            case 0x13: //addi
+                if ((imm12 >> 11) == 1){
+                    imm12 += 0xFFFFF000;
+                }
+                reg[rd] = reg[rs1] + imm12;
+                break;
+            case 0x17: //auipc
+                if ((imm20 >> 19) == 1){
+                    imm20 += 0xFFF00000;
+                }
+                printf("rd: %x\n", rd);
+                reg[rd] = pc + imm20;
+                pc = pc + imm20;
+                printf("Stored value: %x\n", reg[rd]);
+                break;
+            case 0x23: //sw
+                switch (funct3) {
+                    case 0x0: //SB
+                        //todo
+                        break;
+                    case 0x1: //SH
+                        //todo
+                        break;
+                    case 0x2: //SW
+                        imm = rd | funct7 >> 6; //Missing some sing extension
+
+                        printf("imm: %x\n", imm);
+                        memory[reg[rs1] + imm] = reg[rs2];
+                        printf("Value saved: %x, at %x\n",memory[reg[rs1] + imm], reg[rs1] + imm);
+                        break;
+                    default:
+                        printf("Invalid funct3");
+                }
+            case 0x67: //jalr
+                //todo
+                break;
+            case 0x6F: //jal
+                reg[rd] = pc+4;
+                pc = jimm;
+                break;
+            case 0x73: //ecall
+            //todo
+                break;
+
+            default:
+                printf("Opcode %x not yet implemented\n", opcode);
+        }
+        printf("pc: %x, \tx1: %x,\tx2: %x,\tx3: %x,\tx4: %x,\tx5: %x, \tx6: %x,\tx7: %x,\n", pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
+        printf("x8: %x, \tx9: %x,\tx10: %x,\tx11: %x,\tx12: %x,\tx13: %x, \tx14: %x,\tx15: %x,\n", reg[8], reg[9], reg[10], reg[11], reg[12], reg[13], reg[14], reg[15]);
+        printf("x16: %x, \tx17: %x,\tx18: %x,\tx19: %x,\tx20: %x,\tx21: %x, \tx22 %x,\tx23: %x,\n", reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
+        printf("x24: %x, \tx25: %x,\tx26: %x,\tx27: %x,\tx28: %x,\tx29: %x, \tx30: %x,\tx31: %x,\n", reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
     }
 
     return 0;
@@ -37,8 +140,6 @@ void readFile(uint32_t* memory){
         perror("Unable to open file!");
         exit(1);
     }
-
-
 
     fseek(fp, 0, SEEK_END);
     int size = ftell(fp);
