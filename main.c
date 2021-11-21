@@ -67,6 +67,27 @@ int main() {
                     case 2: //SLTI
                         //todo
                         break;
+                    case 3: //SLTIU
+                        //todo
+                        break;
+                    case 4: //XORI
+                        if((imm12 >> 11) == 1){
+                            imm12 += 0xFFFFF000;
+                        }
+                        reg[rd] = reg[rs1] ^ imm12;
+                        break;
+                    case 6: //ORI
+                        if((imm12 >> 11) == 1){
+                            imm12 += 0xFFFFF000;
+                        }
+                        reg[rd] = reg[rs1] | imm12;
+                        break;
+                    case 7: //ANDI
+                        if((imm12 >> 11) == 1){
+                            imm12 += 0xFFFFF000;
+                        }
+                        reg[rd] = reg[rs1] & imm12;
+                        break;
                 }
                 break;
             case 0x17: //auipc
