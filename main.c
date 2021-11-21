@@ -26,7 +26,7 @@ int main() {
 
     readFile(memory);
 
-    while(pc < 0x2c){
+    while(pc < 0x68){
         pc+=4;
         uint32_t instr = memory[pc];
         uint32_t opcode = instr & 0x7f;
@@ -42,6 +42,9 @@ int main() {
         uint32_t part3 = (instr >> 31);
         uint32_t imm;
         uint32_t jimm = part3 << 18| part1 << 10 | part2; //This might be wrong!!
+        uint32_t print;
+        int printCounter = 0;
+        int printOffset = 0;
         printf("\nOpcode: %x\n", opcode);
 
 
@@ -101,8 +104,11 @@ int main() {
                         //todo
                         break;
                     case 0x2: //SW
-                        imm = rd | funct7 >> 6; //Missing some sing extension
+                        if(funct7 >> 6 == 1){
+                            funct7 += 0xFFFFFF80;
+                        }
 
+                        imm = (funct7 << 5) + rd; //Missing some sing extension
                         printf("imm: %x\n", imm);
                         memory[reg[rs1] + imm] = reg[rs2];
                         printf("Value saved: %x, at %x\n",memory[reg[rs1] + imm], reg[rs1] + imm);
@@ -115,10 +121,34 @@ int main() {
                 break;
             case 0x6F: //jal
                 reg[rd] = pc+4;
-                pc = jimm;
+                pc += jimm-4;
                 break;
             case 0x73: //ecall
-            //todo
+                switch (reg[17]) {
+                    case 1: //printInt
+                        break;
+                    case 4: //printString
+                        print = memory[reg[10]];
+                        while (print & 0xFF){
+                            printf("%c", print);
+                            print = print >> 8;
+                            printCounter++;
+                            if(printCounter > 3){
+                                printOffset++;
+                                printCounter = 0;
+                                print = memory[reg[10] + printOffset*4];
+                            }
+                        }
+                        printf("\n");
+                        break;
+                    case 10: //exits program
+                        return 0;
+                        break;
+                    case 11: //printChar
+                        break;
+                    default:
+                        break;
+                }
                 break;
 
             default:
