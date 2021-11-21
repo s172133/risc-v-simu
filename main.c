@@ -11,7 +11,9 @@
 #endif
 
 void readFile(uint32_t* memory);
-
+void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t* memory, uint32_t funct3, uint32_t *reg);
+void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* memory, uint32_t *reg);
+void ecall(uint32_t print, int printCounter, int printOffset, uint32_t* memory,uint32_t* reg);
 
 int main() {
 
@@ -26,7 +28,7 @@ int main() {
 
     readFile(memory);
 
-    while(pc < 0x68){
+    while(pc < 0x70){
         pc+=4;
         uint32_t instr = memory[pc];
         uint32_t opcode = instr & 0x7f;
@@ -45,40 +47,13 @@ int main() {
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
+        reg[0] = 0;
         printf("\nOpcode: %x\n", opcode);
 
 
         switch (opcode) {
-            case 0x0: //Invalid opcode just skip
-                break;
             case 0x3: //load
-                switch (funct3) {
-                    case 0x0: //LB
-                        //todo
-                        break;
-                    case 0x1: //LH
-                        //todo
-                        break;
-
-                    case 0x2: //LW
-                        if ((imm12 >> 11) == 1){
-                            imm12 += 0xFFFFF000;
-                        }
-                        printf("imm12: %x\n", imm12);
-                        reg[rd] = memory[reg[rs1]+imm12];
-                        printf("imm12: %x\n",  memory[reg[rs1]+imm12]);
-                        //todo
-                        break;
-                    case 0x4: //LBU
-                        //todo
-                        break;
-                    case 0x5: //LHU
-                        //todo
-                        break;
-                    default:
-                        printf("Invalid funct3");
-                }
-                //todo
+                load(imm12, rd, rs1, memory, funct3, reg);
                 break;
             case 0x13: //addi
                 if ((imm12 >> 11) == 1){
@@ -95,35 +70,19 @@ int main() {
                 pc = pc + imm20;
                 printf("Stored value: %x\n", reg[rd]);
                 break;
-            case 0x23: //sw
-                switch (funct3) {
-                    case 0x0: //SB
-                        //todo
-                        break;
-                    case 0x1: //SH
-                        //todo
-                        break;
-                    case 0x2: //SW
-                        if(funct7 >> 6 == 1){
-                            funct7 += 0xFFFFFF80;
-                        }
-
-                        imm = (funct7 << 5) + rd; //Missing some sing extension
-                        printf("imm: %x\n", imm);
-                        memory[reg[rs1] + imm] = reg[rs2];
-                        printf("Value saved: %x, at %x\n",memory[reg[rs1] + imm], reg[rs1] + imm);
-                        break;
-                    default:
-                        printf("Invalid funct3");
-                }
+            case 0x23: //store
+                store(funct3, funct7, imm, rd, rs1, rs2, memory, reg);
+                break;
             case 0x67: //jalr
-                //todo
+                reg[rd] = reg[rs1]-4 + imm12;
+                pc = reg[rd];
                 break;
             case 0x6F: //jal
                 reg[rd] = pc+4;
                 pc += jimm-4;
                 break;
             case 0x73: //ecall
+                //ecall(print, printCounter, printOffset, memory, reg);
                 switch (reg[17]) {
                     case 1: //printInt
                         break;
@@ -174,10 +133,8 @@ void readFile(uint32_t* memory){
     fseek(fp, 0, SEEK_END);
     int size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    //printf("size of program is %d\n", size);
 
     uint32_t word = getw(fp);
-
     int i = 0;
     while (word != EOF) {
         //printf("%x\n", word);
@@ -185,7 +142,60 @@ void readFile(uint32_t* memory){
         i += 4;
         word = getw(fp);
     }
-
     fclose(fp);
+}
+void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t* memory, uint32_t funct3, uint32_t* reg){
+    switch (funct3) {
+        case 0x0: //LB
+            //todo
+            break;
+        case 0x1: //LH
+            //todo
+            break;
 
+        case 0x2: //LW
+            if ((imm12 >> 11) == 1){
+                imm12 += 0xFFFFF000;
+            }
+        printf("imm12: %x\n", imm12);
+        reg[rd] = memory[reg[rs1]+imm12];
+        printf("imm12: %x\n",  memory[reg[rs1]+imm12]);
+        //todo
+        break;
+        case 0x4: //LBU
+            //todo
+            break;
+        case 0x5: //LHU
+            //todo
+            break;
+        default:
+            printf("Invalid funct3");
+    }
+}
+
+void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* memory, uint32_t *reg){
+    switch (funct3) {
+        case 0x0: //SB
+            //todo
+            break;
+        case 0x1: //SH
+            //todo
+            break;
+        case 0x2: //SW
+            if(funct7 >> 6 == 1){
+                funct7 += 0xFFFFFF80;
+            }
+
+            imm = (funct7 << 5) + rd; //Missing some sing extension
+            printf("imm: %x\n", imm);
+            memory[reg[rs1] + imm] = reg[rs2];
+            printf("Value saved: %x, at %x\n",memory[reg[rs1] + imm], reg[rs1] + imm);
+            break;
+        default:
+            printf("Invalid funct3");
+    }
+}
+
+void ecall(uint32_t print, int printCounter, int printOffset, uint32_t* memory,uint32_t* reg){
+    //Maybe implement ecall as function.
 }
