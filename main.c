@@ -47,6 +47,7 @@ int main() {
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
+        int ecallVal = 0;
         reg[0] = 0;
         //printf("\nOpcode: %x\n", opcode);
 
@@ -88,13 +89,15 @@ int main() {
                 pc += jimm - 4;
                 break;
             case 0x73: //ecall
-                if(ecall(print, printCounter, printOffset, memory, reg) == 10) return 0;
+                ecallVal = ecall(print, printCounter, printOffset, memory, reg);
+                if(ecallVal == 10) return 0;
+                else if(ecallVal == 17) return reg[10];
                 break;
 
             default:
                 printf("Opcode %x not yet implemented\n", opcode);
         }
-
+        /*
         printf("pc: %x, \tx1: %x,\tx2: %x,\tx3: %x,\tx4: %x,\tx5: %x, \tx6: %x,\tx7: %x,\n",
             pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
         printf("x8: %x, \tx9: %x,\tx10: %x,\tx11: %x,\tx12: %x,\tx13: %x, \tx14: %x,\tx15: %x,\n",
@@ -103,7 +106,7 @@ int main() {
             reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
         printf("x24: %x, \tx25: %x,\tx26: %x,\tx27: %x,\tx28: %x,\tx29: %x, \tx30: %x,\tx31: %x,\n",
             reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
-
+        */
     }
 }
 
@@ -132,11 +135,23 @@ void readFile(uint32_t *memory) {
 
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg) {
     switch (funct3) {
-        case 0x0: //LB
-            //todo
+        case 0x0: //LB Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+            if ((reg[rd] >> 7) == 1){
+                reg[rd] += 0xFFFFFF00;
+            }
             break;
-        case 0x1: //LH
-            //todo
+        case 0x1: //LH Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
+            if ((reg[rd] >> 7) == 1){
+                reg[rd] += 0xFFFF0000;
+            }
             break;
 
         case 0x2: //LW
@@ -145,11 +160,17 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             }
             reg[rd] = memory[reg[rs1] + imm12];
             break;
-        case 0x4: //LBU
-            //todo
+        case 0x4: //LBU Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
             break;
-        case 0x5: //LHU
-            //todo
+        case 0x5: //LHU Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
             break;
         default:
             printf("Invalid funct3");
@@ -159,19 +180,29 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
 void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg) {
     switch (funct3) {
-        case 0x0: //SB
-            //todo
+        case 0x0: //SB Untested
+            if (funct7 >> 6 == 1) {
+                funct7 += 0xFFFFFF80;
+            }
+            imm = (funct7 << 5) + rd;
+
+            memory[reg[rs1] + imm] = (reg[rs2] & 0x000000FF);
             break;
-        case 0x1: //SH
-            //todo
+        case 0x1: //SH Untested
+            if (funct7 >> 6 == 1) {
+                funct7 += 0xFFFFFF80;
+            }
+            imm = (funct7 << 5) + rd;
+
+            memory[reg[rs1] + imm] = (reg[rs2] & 0x0000FFFF);
             break;
         case 0x2: //SW
             if (funct7 >> 6 == 1) {
                 funct7 += 0xFFFFFF80;
             }
 
-            imm = (funct7 << 5) + rd; //Missing some sing extension
-            //printf("imm: %x\n", imm);
+            imm = (funct7 << 5) + rd;
+
             memory[reg[rs1] + imm] = reg[rs2];
             //printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
             break;
@@ -277,7 +308,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
 int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
     switch (reg[17]) {
         case 1: //printInt
-            printf("%u\n", reg[10]); //This doesn't work
+            printf("%d\n", memory[reg[10]]); //This doesn't work
             break;
         case 4: //printString
             print = memory[reg[10]];
@@ -297,6 +328,8 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
             break;
         case 11: //printChar
             printf("%c", reg[10]);
+            break;
+        case 17:
             break;
         default:
             break;
