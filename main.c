@@ -11,11 +11,16 @@
 #endif
 
 void readFile(uint32_t *memory);
+
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
+
 void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
+
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg);
+
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
+
 int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
 int main() {
@@ -90,8 +95,8 @@ int main() {
                 break;
             case 0x73: //ecall
                 ecallVal = ecall(print, printCounter, printOffset, memory, reg);
-                if(ecallVal == 10) return 0;
-                else if(ecallVal == 17) return reg[10];
+                if (ecallVal == 10) return 0;
+                else if (ecallVal == 17) return reg[10];
                 break;
 
             default:
@@ -140,7 +145,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
-            if ((reg[rd] >> 7) == 1){
+            if ((reg[rd] >> 7) == 1) {
                 reg[rd] += 0xFFFFFF00;
             }
             break;
@@ -149,7 +154,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
-            if ((reg[rd] >> 7) == 1){
+            if ((reg[rd] >> 7) == 1) {
                 reg[rd] += 0xFFFF0000;
             }
             break;
@@ -211,7 +216,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t
     }
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg){
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
     switch (funct3) {
         case 0: //addi
             if ((imm12 >> 11) == 1) {
@@ -220,35 +225,35 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] + imm12;
             break;
         case 2: //SLTI
-            if(reg[rs1] >> 4 == 0 && imm12 >> 11 == 0 ) // (rs = 5 bit) (imm12 = 12 bit)
-            if(reg[rs1] < imm12){
-                reg[rd] = 1;
-            } else {
-                reg[rd] = 0;
-            }
+            if (reg[rs1] >> 4 == 0 && imm12 >> 11 == 0) // (rs = 5 bit) (imm12 = 12 bit)
+                if (reg[rs1] < imm12) {
+                    reg[rd] = 1;
+                } else {
+                    reg[rd] = 0;
+                }
             break;
         case 3: //SLTIU
-            if(reg[rs1] >> 4 == 1 && imm12 >> 11 == 1 ) // (rs = 5 bit) (imm12 = 12 bit)
-                if(reg[rs1] < imm12){
+            if (reg[rs1] >> 4 == 1 && imm12 >> 11 == 1) // (rs = 5 bit) (imm12 = 12 bit)
+                if (reg[rs1] < imm12) {
                     reg[rd] = 1;
                 } else {
                     reg[rd] = 0;
                 }
             break;
         case 4: //XORI
-            if((imm12 >> 11) == 1){
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] ^ imm12;
             break;
         case 6: //ORI
-            if((imm12 >> 11) == 1){
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] | imm12;
             break;
         case 7: //ANDI
-            if((imm12 >> 11) == 1){
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] & imm12;
@@ -256,7 +261,7 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
     }
 }
 
-void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg){
+void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
     switch (funct3) {
         case 0: //add/sub
             if (imm12 >> 10 & 0x1) { //sub
@@ -265,26 +270,23 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
                 reg[rd] = reg[rs1] + reg[rs2];
             }
             break;
-        case 1: //SLL
-            reg[rd] = reg[rs1] << reg[rs2];
+        case 1: //SLL UNtested
+            reg[rd] = reg[rs1] << (reg[rs2] & 0x1F);
             break;
-        case 2: //SLT
-            if(reg[rs1] >> 4 == 0 && reg[rs2] >> 4 == 0 ){ // Check if signed int (rs = 5 bit)
-                if (reg[rs1] < reg[rs2]){
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+        case 2: //SLT Untested
+
+            if ((int) reg[rs1] < (int) reg[rs2]) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
             }
             break;
 
-        case 3: //SLTU
-            if(reg[rs1] >> 4 == 1 && reg[rs2] >> 4 == 1 ){ // Check if unsigned int (rs = 5 bit)
-                if (reg[rs1] < reg[rs2]){
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+        case 3: //SLTU Untested
+            if (reg[rs1] < reg[rs2]) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
             }
             break;
         case 4: //XOR
