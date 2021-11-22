@@ -47,6 +47,7 @@ int main() {
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
+        int ecallVal = 0;
         reg[0] = 0;
         //printf("\nOpcode: %x\n", opcode);
 
@@ -86,7 +87,9 @@ int main() {
                 pc += jimm - 4;
                 break;
             case 0x73: //ecall
-                if(ecall(print, printCounter, printOffset, memory, reg) == 10) return 0;
+                ecallVal = ecall(print, printCounter, printOffset, memory, reg);
+                if(ecallVal == 10) return 0;
+                else if(ecallVal == 17) return reg[10];
                 break;
 
             default:
@@ -290,6 +293,8 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
             break;
         case 11: //printChar
             printf("%c", reg[10]);
+            break;
+        case 17:
             break;
         default:
             break;
