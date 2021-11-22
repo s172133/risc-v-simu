@@ -215,7 +215,6 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
     }
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
 
 void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc) {
     switch (funct3) {
@@ -263,14 +262,6 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             }
             reg[rd] = reg[rs1] + imm12;
             break;
-        case 2: //SLTI
-            if(reg[rs1] >> 4 == 0 && imm12 >> 11 == 1 ) { // (rs = 5 bit) (imm12 = 12 bit)
-                imm12 += 0xFFFFF000;
-                if (reg[rs1] < imm12) {
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
         case 2: //SLTI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
