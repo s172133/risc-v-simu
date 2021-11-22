@@ -14,6 +14,8 @@ void readFile(uint32_t *memory);
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
 void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
+void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg);
 void ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
 int main() {
@@ -21,10 +23,7 @@ int main() {
     printf("********** Starting **********\n");
 
     uint32_t pc = 0; // Program counter
-    uint32_t reg[32]; // Register
-    for (int i = 0; i < 31; i++) {
-        reg[i] = 0;
-    }
+    uint32_t reg[32] = {0}; // Register
     uint32_t *memory = malloc(0xFFFFFFFF * sizeof(uint32_t)); // Allocate binary code
 
     readFile(memory);
@@ -57,38 +56,7 @@ int main() {
                 load(imm12, rd, rs1, memory, funct3, reg);
                 break;
             case 0x13: //Immediate
-                switch (funct3) {
-                    case 0: //addi
-                        if ((imm12 >> 11) == 1) {
-                            imm12 += 0xFFFFF000;
-                        }
-                        reg[rd] = reg[rs1] + imm12;
-                        break;
-                    case 2: //SLTI
-                        //todo
-                        break;
-                    case 3: //SLTIU
-                        //todo
-                        break;
-                    case 4: //XORI
-                        if((imm12 >> 11) == 1){
-                            imm12 += 0xFFFFF000;
-                        }
-                        reg[rd] = reg[rs1] ^ imm12;
-                        break;
-                    case 6: //ORI
-                        if((imm12 >> 11) == 1){
-                            imm12 += 0xFFFFF000;
-                        }
-                        reg[rd] = reg[rs1] | imm12;
-                        break;
-                    case 7: //ANDI
-                        if((imm12 >> 11) == 1){
-                            imm12 += 0xFFFFF000;
-                        }
-                        reg[rd] = reg[rs1] & imm12;
-                        break;
-                }
+                immediate(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x17: //auipc
                 if ((imm20 >> 19) == 1) {
@@ -103,40 +71,7 @@ int main() {
                 store(funct3, funct7, imm, rd, rs1, rs2, memory, reg);
                 break;
             case 0x33: //interger operations
-                switch (funct3) {
-                    case 0: //add/sub
-                        if (imm12 >> 10 & 0x1) { //sub
-                            reg[rd] = reg[rs1] - reg[rs2];
-                        } else { //add
-                            reg[rd] = reg[rs1] + reg[rs2];
-                        }
-                        break;
-                    case 1: //SLL
-                        //todo
-                        break;
-                    case 2: //SLT
-                        //todo
-                        break;
-                    case 3: //SLTU
-                        //todo
-                        break;
-                    case 4: //XOR
-                        reg[rd] = reg[rs1] ^ reg[rs2]; //Not tested
-                        break;
-                    case 5: //SRL/SRA
-                        if (imm12 >> 10 & 0x1) { //SRA
-                            //todo
-                        } else { //SRL
-                            //todo
-                        }
-                        break;
-                    case 6: //OR
-                        reg[rd] = reg[rs1] | reg[rs2]; //Not tested
-                        break;
-                    case 7: //AND
-                        reg[rd] = reg[rs1] & reg[rs2]; //Not tested
-                        break;
-                }
+                intergerOp(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x67: //jalr
                 reg[rd] = reg[rs1] - 4 + imm12;
@@ -170,6 +105,7 @@ int main() {
                         return 0;
                         break;
                     case 11: //printChar
+                        printf("%c", memory[reg[10]]);
                         break;
                     default:
                         break;
@@ -265,6 +201,78 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t
             break;
         default:
             printf("Invalid funct3");
+    }
+}
+
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg){
+    switch (funct3) {
+        case 0: //addi
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = reg[rs1] + imm12;
+            break;
+        case 2: //SLTI
+            //todo
+            break;
+        case 3: //SLTIU
+            //todo
+            break;
+        case 4: //XORI
+            if((imm12 >> 11) == 1){
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = reg[rs1] ^ imm12;
+            break;
+        case 6: //ORI
+            if((imm12 >> 11) == 1){
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = reg[rs1] | imm12;
+            break;
+        case 7: //ANDI
+            if((imm12 >> 11) == 1){
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = reg[rs1] & imm12;
+            break;
+    }
+}
+
+void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg){
+    switch (funct3) {
+        case 0: //add/sub
+            if (imm12 >> 10 & 0x1) { //sub
+                reg[rd] = reg[rs1] - reg[rs2];
+            } else { //add
+                reg[rd] = reg[rs1] + reg[rs2];
+            }
+            break;
+        case 1: //SLL
+            //todo
+            break;
+        case 2: //SLT
+            //todo
+            break;
+        case 3: //SLTU
+            //todo
+            break;
+        case 4: //XOR
+            reg[rd] = reg[rs1] ^ reg[rs2]; //Not tested
+            break;
+        case 5: //SRL/SRA
+            if (imm12 >> 10 & 0x1) { //SRA
+                //todo
+            } else { //SRL
+                //todo
+            }
+            break;
+        case 6: //OR
+            reg[rd] = reg[rs1] | reg[rs2]; //Not tested
+            break;
+        case 7: //AND
+            reg[rd] = reg[rs1] & reg[rs2]; //Not tested
+            break;
     }
 }
 
