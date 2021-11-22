@@ -225,22 +225,24 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] + imm12;
             break;
         case 2: //SLTI
-            if (reg[rs1] >> 4 == 0 && imm12 >> 11 == 0) { // (rs = 5 bit) (imm12 = 12 bit)
-                if (reg[rs1] < imm12) {
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
             }
-
+            if ((int)reg[rs1] < (int)imm12) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
+            }
             break;
         case 3: //SLTIU
-            if (reg[rs1] >> 4 == 1 && imm12 >> 11 == 1) // (rs = 5 bit) (imm12 = 12 bit)
-                if (reg[rs1] < imm12) {
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            if (reg[rs1] < imm12) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
+            }
             break;
         case 4: //XORI
             if ((imm12 >> 11) == 1) {
