@@ -94,7 +94,7 @@ int main() {
             default:
                 printf("Opcode %x not yet implemented\n", opcode);
         }
-        /*
+
         printf("pc: %x, \tx1: %x,\tx2: %x,\tx3: %x,\tx4: %x,\tx5: %x, \tx6: %x,\tx7: %x,\n",
             pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
         printf("x8: %x, \tx9: %x,\tx10: %x,\tx11: %x,\tx12: %x,\tx13: %x, \tx14: %x,\tx15: %x,\n",
@@ -103,7 +103,7 @@ int main() {
             reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
         printf("x24: %x, \tx25: %x,\tx26: %x,\tx27: %x,\tx28: %x,\tx29: %x, \tx30: %x,\tx31: %x,\n",
             reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
-        */
+
     }
 }
 
@@ -189,10 +189,20 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] + imm12;
             break;
         case 2: //SLTI
-            //todo
+            if(reg[rs1] >> 4 == 0 && imm12 >> 11 == 0 ) // (rs = 5 bit) (imm12 = 12 bit)
+            if(reg[rs1] < imm12){
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
+            }
             break;
         case 3: //SLTIU
-            //todo
+            if(reg[rs1] >> 4 == 1 && imm12 >> 11 == 1 ) // (rs = 5 bit) (imm12 = 12 bit)
+                if(reg[rs1] < imm12){
+                    reg[rd] = 1;
+                } else {
+                    reg[rd] = 0;
+                }
             break;
         case 4: //XORI
             if((imm12 >> 11) == 1){
@@ -225,22 +235,34 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
             }
             break;
         case 1: //SLL
-            //todo
+            reg[rd] = reg[rs1] << reg[rs2];
             break;
         case 2: //SLT
-            //todo
+            if(reg[rs1] >> 4 == 0 && reg[rs2] >> 4 == 0 ){ // Check if signed int (rs = 5 bit)
+                if (reg[rs1] < reg[rs2]){
+                    reg[rd] = 1;
+                } else {
+                    reg[rd] = 0;
+                }
+            }
             break;
         case 3: //SLTU
-            //todo
+            if(reg[rs1] >> 4 == 1 && reg[rs2] >> 4 == 1 ){ // Check if unsigned int (rs = 5 bit)
+                if (reg[rs1] < reg[rs2]){
+                    reg[rd] = 1;
+                } else {
+                    reg[rd] = 0;
+                }
+            }
             break;
         case 4: //XOR
             reg[rd] = reg[rs1] ^ reg[rs2]; //Not tested
             break;
         case 5: //SRL/SRA
-            if (imm12 >> 10 & 0x1) { //SRA
-                //todo
-            } else { //SRL
-                //todo
+            if (imm12 >> 10 & 0x1) { //SRA   Arithmetic right shift
+                reg[rd] = (reg[rs1] >> reg[rs2]) & reg[rs1]; // Might not be right
+            } else { //SRL      Logical right shift
+                reg[rd] = reg[rs1] >> reg[rs2];
             }
             break;
         case 6: //OR
@@ -255,7 +277,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
 int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
     switch (reg[17]) {
         case 1: //printInt
-            printf("%d\n", memory[reg[10]]); //This doesn't work
+            printf("%u\n", reg[10]); //This doesn't work
             break;
         case 4: //printString
             print = memory[reg[10]];
@@ -274,7 +296,7 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
         case 10: //exits program
             break;
         case 11: //printChar
-            printf("%c", memory[reg[10]]);
+            printf("%c", reg[10]);
             break;
         default:
             break;
