@@ -16,7 +16,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t
            uint32_t *reg);
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg);
-void ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
+int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
 int main() {
 
@@ -83,33 +83,7 @@ int main() {
                 break;
             case 0x73: //ecall
                 //ecall(print, printCounter, printOffset, memory, reg);
-                switch (reg[17]) {
-                    case 1: //printInt
-                        printf("%d\n", memory[reg[10]]); //This doesn't work
-                        break;
-                    case 4: //printString
-                        print = memory[reg[10]];
-                        while (print & 0xFF) {
-                            printf("%c", print);
-                            print = print >> 8;
-                            printCounter++;
-                            if (printCounter > 3) {
-                                printOffset++;
-                                printCounter = 0;
-                                print = memory[reg[10] + printOffset * 4];
-                            }
-                        }
-                        printf("\n");
-                        break;
-                    case 10: //exits program
-                        return 0;
-                        break;
-                    case 11: //printChar
-                        printf("%c", memory[reg[10]]);
-                        break;
-                    default:
-                        break;
-                }
+                if(ecall(print, printCounter, printOffset, memory, reg) == 10) return 0;
                 break;
 
             default:
@@ -276,6 +250,32 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
     }
 }
 
-void ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
-    //Maybe implement ecall as function.
+int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
+    switch (reg[17]) {
+        case 1: //printInt
+            printf("%d\n", memory[reg[10]]); //This doesn't work
+            break;
+        case 4: //printString
+            print = memory[reg[10]];
+            while (print & 0xFF) {
+                printf("%c", print);
+                print = print >> 8;
+                printCounter++;
+                if (printCounter > 3) {
+                    printOffset++;
+                    printCounter = 0;
+                    print = memory[reg[10] + printOffset * 4];
+                }
+            }
+            printf("\n");
+            break;
+        case 10: //exits program
+            break;
+        case 11: //printChar
+            printf("%c", memory[reg[10]]);
+            break;
+        default:
+            break;
+    }
+    return reg[17];
 }
