@@ -254,7 +254,7 @@ void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_
     }
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg){
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t* reg){
     switch (funct3) {
         case 0: //addi
             if ((imm12 >> 11) == 1) {
