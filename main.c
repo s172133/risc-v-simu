@@ -62,10 +62,8 @@ int main() {
                 if ((imm20 >> 19) == 1) {
                     imm20 += 0xFFF00000;
                 }
-                //printf("rd: %x\n", rd);
                 reg[rd] = pc + imm20;
                 pc = pc + imm20;
-                //printf("Stored value: %x\n", reg[rd]);
                 break;
             case 0x23: //store
                 store(funct3, funct7, imm, rd, rs1, rs2, memory, reg);
@@ -109,7 +107,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("hello.bin", "rb");
+    FILE *fp = fopen("mult.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -132,24 +130,41 @@ void readFile(uint32_t *memory) {
 
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg) {
     switch (funct3) {
-        case 0x0: //LB
-            //todo
+        case 0x0: //LB Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+            if ((reg[rd] >> 7) == 1){
+                reg[rd] += 0xFFFFFF00;
+            }
             break;
-        case 0x1: //LH
-            //todo
+        case 0x1: //LH Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
+            if ((reg[rd] >> 7) == 1){
+                reg[rd] += 0xFFFF0000;
+            }
             break;
-
         case 0x2: //LW
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = memory[reg[rs1] + imm12];
             break;
-        case 0x4: //LBU
-            //todo
+        case 0x4: //LBU Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
             break;
-        case 0x5: //LHU
-            //todo
+        case 0x5: //LHU Untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
             break;
         default:
             printf("Invalid funct3");
@@ -255,7 +270,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
 int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
     switch (reg[17]) {
         case 1: //printInt
-            printf("%d\n", memory[reg[10]]); //This doesn't work
+            printf("%d\n", reg[10]); //This doesn't work
             break;
         case 4: //printString
             print = memory[reg[10]];
@@ -274,7 +289,7 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
         case 10: //exits program
             break;
         case 11: //printChar
-            printf("%c", memory[reg[10]]);
+            printf("%c", reg[10]);
             break;
         default:
             break;
