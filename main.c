@@ -14,6 +14,7 @@ void readFile(uint32_t *memory);
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
 void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
+void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc);
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg);
 int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
@@ -65,7 +66,7 @@ int main() {
                 }
                 //printf("rd: %x\n", rd);
                 reg[rd] = pc + imm20;
-                pc = pc + imm20;
+                pc += imm20;
                 //printf("Stored value: %x\n", reg[rd]);
                 break;
             case 0x23: //store
@@ -78,7 +79,7 @@ int main() {
                 reg[rd] = imm20 << 12; //Think this is right
                 break;
             case 0x63: //Branch
-                //todo
+                branch(funct3, imm12, rs1, rs2, reg, pc);
                 break;
             case 0x67: //jalr
                 reg[rd] = reg[rs1] - 4 + imm12;
@@ -211,6 +212,45 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t
     }
 }
 
+
+void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc) {
+    switch (funct3) {
+        case 0: // BEQ
+            if(reg[rs1] == reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        case 1: // BNE
+            if(reg[rs1] != reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        case 4: // BLT
+            if(reg[rs1] < reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        case 5: // BGE
+            if(reg[rs1] > reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        case 6: // BLTU
+            if(reg[rs1] < reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        case 7: // BGEU
+            if(reg[rs1] > reg[rs2]){
+                pc += imm12;
+            }
+            break;
+        default:
+            printf("bad branch\n");
+            break;
+    }
+}
+
 void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg){
     switch (funct3) {
         case 0: //addi
@@ -220,15 +260,16 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] + imm12;
             break;
         case 2: //SLTI
-            if(reg[rs1] >> 4 == 0 && imm12 >> 11 == 0 ) // (rs = 5 bit) (imm12 = 12 bit)
-            if(reg[rs1] < imm12){
-                reg[rd] = 1;
-            } else {
-                reg[rd] = 0;
+            if(reg[rs1] >> 4 == 0 && imm12 >> 11 == 1 ) { // (rs = 5 bit) (imm12 = 12 bit)
+                imm12 += 0xFFFFF000;
+                if (reg[rs1] < imm12) {
+                    reg[rd] = 1;
+                } else {
+                    reg[rd] = 0;
+                }
             }
             break;
         case 3: //SLTIU
-            if(reg[rs1] >> 4 == 1 && imm12 >> 11 == 1 ) // (rs = 5 bit) (imm12 = 12 bit)
                 if(reg[rs1] < imm12){
                     reg[rd] = 1;
                 } else {
