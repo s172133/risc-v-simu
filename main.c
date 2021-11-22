@@ -302,7 +302,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
             if (imm12 >> 10 & 0x1) { //SRA   Arithmetic right shift
                 reg[rd] = (reg[rs1] >> reg[rs2]) & reg[rs1]; // Might not be right
             } else { //SRL      Logical right shift
-                reg[rd] = reg[rs1] >> reg[rs2];
+                reg[rd] = reg[rs1] >> (reg[rs2] & 0x1F);
             }
             break;
         case 6: //OR
