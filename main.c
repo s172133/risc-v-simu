@@ -73,6 +73,12 @@ int main() {
             case 0x33: //interger operations
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
                 break;
+            case 0x37: //LUI
+                //todo
+                break;
+            case 0x63: //Branch
+                //todo
+                break;
             case 0x67: //jalr
                 reg[rd] = reg[rs1] - 4 + imm12;
                 pc = reg[rd];
@@ -137,10 +143,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            //printf("imm12: %x\n", imm12);
             reg[rd] = memory[reg[rs1] + imm12];
-            //printf("imm12: %x\n", memory[reg[rs1] + imm12]);
-            //todo
             break;
         case 0x4: //LBU
             //todo
