@@ -18,7 +18,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
 void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc);
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *reg);
 
 uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
@@ -60,7 +60,7 @@ int main() {
                 load(imm12, rd, rs1, memory, funct3, reg);
                 break;
             case 0x13: //Immediate
-                immediate(funct3, imm12, rd, rs1, rs2, reg);
+                immediate(funct3, imm12, rd, rs1, reg);
                 break;
             case 0x17: //auipc
                 if ((imm20 >> 19) == 1) {
@@ -68,7 +68,7 @@ int main() {
                 }
                 //printf("rd: %x\n", rd);
                 reg[rd] = pc + imm20;
-                pc += imm20;
+                pc = pc + imm20;
                 //printf("Stored value: %x\n", reg[rd]);
                 break;
             case 0x23: //store
@@ -340,7 +340,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
             if (imm12 >> 10 & 0x1) { //SRA   Arithmetic right shift
                 reg[rd] = (reg[rs1] >> reg[rs2]) & reg[rs1]; // Might not be right
             } else { //SRL      Logical right shift
-                reg[rd] = reg[rs1] >> reg[rs2];
+                reg[rd] = reg[rs1] >> (reg[rs2] & 0x1F);
             }
             break;
         case 6: //OR
