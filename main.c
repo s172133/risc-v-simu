@@ -177,21 +177,30 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
 void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg) {
     switch (funct3) {
-        case 0x0: //SB
-            //todo
+        case 0x0: //SB Untested
+            if (funct7 >> 6 == 1) {
+                funct7 += 0xFFFFFF80;
+            }
+            imm = (funct7 << 5) + rd;
+
+            memory[reg[rs1] + imm] = (reg[rs2] & 0x000000FF);
             break;
-        case 0x1: //SH
-            //todo
+        case 0x1: //SH Untested
+            if (funct7 >> 6 == 1) {
+                funct7 += 0xFFFFFF80;
+            }
+            imm = (funct7 << 5) + rd;
+
+            memory[reg[rs1] + imm] = (reg[rs2] & 0x0000FFFF);
             break;
         case 0x2: //SW
             if (funct7 >> 6 == 1) {
                 funct7 += 0xFFFFFF80;
             }
 
-            imm = (funct7 << 5) + rd; //Missing some sing extension
-            //printf("imm: %x\n", imm);
+            imm = (funct7 << 5) + rd;
+
             memory[reg[rs1] + imm] = reg[rs2];
-            //printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
             break;
         default:
             printf("Invalid funct3");
