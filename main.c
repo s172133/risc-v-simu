@@ -74,7 +74,7 @@ int main() {
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x37: //LUI
-                //todo
+                reg[rd] = imm20 << 12; //Think this is right
                 break;
             case 0x63: //Branch
                 //todo
