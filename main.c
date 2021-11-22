@@ -220,32 +220,32 @@ void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_
     switch (funct3) {
         case 0: // BEQ
             if(reg[rs1] == reg[rs2]){
-                pc += imm12;
+                pc += imm12 - 4;
             }
             break;
         case 1: // BNE
             if(reg[rs1] != reg[rs2]){
-                pc += imm12;
+                pc += imm12 - 4;
             }
             break;
         case 4: // BLT
-            if(reg[rs1] < reg[rs2]){
-                pc += imm12;
+            if((int)reg[rs1] < (int)reg[rs2]){
+                pc += imm12 - 4;
             }
             break;
         case 5: // BGE
-            if(reg[rs1] > reg[rs2]){
-                pc += imm12;
+            if((int)reg[rs1] >= (int)reg[rs2]){
+                pc += imm12 - 4;
             }
             break;
         case 6: // BLTU
             if(reg[rs1] < reg[rs2]){
-                pc += imm12;
+                pc += imm12 - 4;
             }
             break;
         case 7: // BGEU
-            if(reg[rs1] > reg[rs2]){
-                pc += imm12;
+            if(reg[rs1] >= reg[rs2]){
+                pc += imm12 - 4;
             }
             break;
         default:
