@@ -12,12 +12,15 @@
 
 void readFile(uint32_t *memory);
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
-void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
+
+void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
 void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc);
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t* reg);
-int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
+
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
+
+uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
 int main() {
 
@@ -43,12 +46,11 @@ int main() {
         uint32_t part1 = (instr >> 12) & 0xFF;
         uint32_t part2 = (instr >> 20) & 0x3FF;
         uint32_t part3 = (instr >> 31);
-        uint32_t imm;
         uint32_t jimm = part3 << 18 | part1 << 10 | part2; //This might be wrong!!
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
-        int ecallVal = 0;
+        uint32_t ecallVal;
         reg[0] = 0;
         //printf("\nOpcode: %x\n", opcode);
 
@@ -70,7 +72,7 @@ int main() {
                 //printf("Stored value: %x\n", reg[rd]);
                 break;
             case 0x23: //store
-                store(funct3, funct7, imm, rd, rs1, rs2, memory, reg);
+                store(funct3, funct7, rd, rs1, rs2, memory, reg);
                 break;
             case 0x33: //interger operations
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
@@ -91,8 +93,8 @@ int main() {
                 break;
             case 0x73: //ecall
                 ecallVal = ecall(print, printCounter, printOffset, memory, reg);
-                if(ecallVal == 10) return 0;
-                else if(ecallVal == 17) return reg[10];
+                if (ecallVal == 10) return 0;
+                else if (ecallVal == 17) return (int)reg[10];
                 break;
 
             default:
@@ -141,7 +143,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
-            if ((reg[rd] >> 7) == 1){
+            if ((reg[rd] >> 7) == 1) {
                 reg[rd] += 0xFFFFFF00;
             }
             break;
@@ -150,7 +152,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
-            if ((reg[rd] >> 7) == 1){
+            if ((reg[rd] >> 7) == 1) {
                 reg[rd] += 0xFFFF0000;
             }
             break;
@@ -178,8 +180,9 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
     }
 }
 
-void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
+void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg) {
+    uint32_t imm;
     switch (funct3) {
         case 0x0: //SB Untested
             if (funct7 >> 6 == 1) {
@@ -212,6 +215,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t
     }
 }
 
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
 
 void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc) {
     switch (funct3) {
@@ -267,37 +271,50 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
                 } else {
                     reg[rd] = 0;
                 }
+        case 2: //SLTI untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            if ((int)reg[rs1] < (int)imm12) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
             }
             break;
-        case 3: //SLTIU
-                if(reg[rs1] < imm12){
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+        case 3: //SLTIU untested
+            if ((imm12 >> 11) == 1) {
+                imm12 += 0xFFFFF000;
+            }
+            if (reg[rs1] < imm12) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
+            }
             break;
-        case 4: //XORI
-            if((imm12 >> 11) == 1){
+        case 4: //XORI untested
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] ^ imm12;
             break;
-        case 6: //ORI
-            if((imm12 >> 11) == 1){
+        case 6: //ORI untested
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] | imm12;
             break;
-        case 7: //ANDI
-            if((imm12 >> 11) == 1){
+        case 7: //ANDI untested
+            if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] & imm12;
             break;
+        default:
+            printf("Invalid funct3");
     }
 }
 
-void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg){
+void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
     switch (funct3) {
         case 0: //add/sub
             if (imm12 >> 10 & 0x1) { //sub
@@ -306,26 +323,23 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
                 reg[rd] = reg[rs1] + reg[rs2];
             }
             break;
-        case 1: //SLL
-            reg[rd] = reg[rs1] << reg[rs2];
+        case 1: //SLL UNtested
+            reg[rd] = reg[rs1] << (reg[rs2] & 0x1F);
             break;
-        case 2: //SLT
-            if(reg[rs1] >> 4 == 0 && reg[rs2] >> 4 == 0 ){ // Check if signed int (rs = 5 bit)
-                if (reg[rs1] < reg[rs2]){
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+        case 2: //SLT Untested
+
+            if ((int) reg[rs1] < (int) reg[rs2]) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
             }
             break;
 
-        case 3: //SLTU
-            if(reg[rs1] >> 4 == 1 && reg[rs2] >> 4 == 1 ){ // Check if unsigned int (rs = 5 bit)
-                if (reg[rs1] < reg[rs2]){
-                    reg[rd] = 1;
-                } else {
-                    reg[rd] = 0;
-                }
+        case 3: //SLTU Untested
+            if (reg[rs1] < reg[rs2]) {
+                reg[rd] = 1;
+            } else {
+                reg[rd] = 0;
             }
             break;
         case 4: //XOR
@@ -344,10 +358,12 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
         case 7: //AND
             reg[rd] = reg[rs1] & reg[rs2]; //Not tested
             break;
+        default:
+            printf("Invalid funct3");
     }
 }
 
-int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
+uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
     switch (reg[17]) {
         case 1: //printInt
             printf("%d\n", memory[reg[10]]); //This doesn't work
@@ -371,8 +387,7 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
         case 11: //printChar
             printf("%c", reg[10]);
             break;
-        case 17:
-            break;
+        //case 17: //Exit with exit code doesn't need case since check is performed elsewhere
         default:
             break;
     }
