@@ -338,7 +338,7 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
         case 11: //printChar
             printf("%c", reg[10]);
             break;
-        case 17:
+        case 17: //Exit with exit code
             break;
         default:
             break;
