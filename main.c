@@ -14,14 +14,14 @@ void readFile(uint32_t *memory);
 
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
 
-void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
+void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
 
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
 void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
-int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
+uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
 int main() {
 
@@ -47,12 +47,11 @@ int main() {
         uint32_t part1 = (instr >> 12) & 0xFF;
         uint32_t part2 = (instr >> 20) & 0x3FF;
         uint32_t part3 = (instr >> 31);
-        uint32_t imm;
         uint32_t jimm = part3 << 18 | part1 << 10 | part2; //This might be wrong!!
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
-        int ecallVal = 0;
+        uint32_t ecallVal;
         reg[0] = 0;
         //printf("\nOpcode: %x\n", opcode);
 
@@ -74,7 +73,7 @@ int main() {
                 //printf("Stored value: %x\n", reg[rd]);
                 break;
             case 0x23: //store
-                store(funct3, funct7, imm, rd, rs1, rs2, memory, reg);
+                store(funct3, funct7, rd, rs1, rs2, memory, reg);
                 break;
             case 0x33: //interger operations
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
@@ -96,7 +95,7 @@ int main() {
             case 0x73: //ecall
                 ecallVal = ecall(print, printCounter, printOffset, memory, reg);
                 if (ecallVal == 10) return 0;
-                else if (ecallVal == 17) return reg[10];
+                else if (ecallVal == 17) return (int)reg[10];
                 break;
 
             default:
@@ -182,8 +181,9 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
     }
 }
 
-void store(uint32_t funct3, uint32_t funct7, uint32_t imm, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
+void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg) {
+    uint32_t imm;
     switch (funct3) {
         case 0x0: //SB Untested
             if (funct7 >> 6 == 1) {
@@ -224,7 +224,7 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             }
             reg[rd] = reg[rs1] + imm12;
             break;
-        case 2: //SLTI
+        case 2: //SLTI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
@@ -234,7 +234,7 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
                 reg[rd] = 0;
             }
             break;
-        case 3: //SLTIU
+        case 3: //SLTIU untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
@@ -244,19 +244,19 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
                 reg[rd] = 0;
             }
             break;
-        case 4: //XORI
+        case 4: //XORI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] ^ imm12;
             break;
-        case 6: //ORI
+        case 6: //ORI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] | imm12;
             break;
-        case 7: //ANDI
+        case 7: //ANDI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
@@ -316,7 +316,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
     }
 }
 
-int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
+uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg) {
     switch (reg[17]) {
         case 1: //printInt
             printf("%d\n", memory[reg[10]]); //This doesn't work
@@ -340,8 +340,7 @@ int ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, u
         case 11: //printChar
             printf("%c", reg[10]);
             break;
-        case 17: //Exit with exit code
-            break;
+        //case 17: //Exit with exit code doesn't need case since check is performed elsewhere
         default:
             break;
     }
