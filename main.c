@@ -19,7 +19,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
 
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *reg);
 
 uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
@@ -61,7 +61,7 @@ int main() {
                 load(imm12, rd, rs1, memory, funct3, reg);
                 break;
             case 0x13: //Immediate
-                immediate(funct3, imm12, rd, rs1, rs2, reg);
+                immediate(funct3, imm12, rd, rs1, reg);
                 break;
             case 0x17: //auipc
                 if ((imm20 >> 19) == 1) {
@@ -216,7 +216,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
     }
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *reg) {
     switch (funct3) {
         case 0: //addi
             if ((imm12 >> 11) == 1) {
