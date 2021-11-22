@@ -277,6 +277,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
                 }
             }
             break;
+
         case 3: //SLTU
             if(reg[rs1] >> 4 == 1 && reg[rs2] >> 4 == 1 ){ // Check if unsigned int (rs = 5 bit)
                 if (reg[rs1] < reg[rs2]){
