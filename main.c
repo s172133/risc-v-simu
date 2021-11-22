@@ -82,7 +82,6 @@ int main() {
                 pc += jimm - 4;
                 break;
             case 0x73: //ecall
-                //ecall(print, printCounter, printOffset, memory, reg);
                 if(ecall(print, printCounter, printOffset, memory, reg) == 10) return 0;
                 break;
 
