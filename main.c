@@ -33,8 +33,8 @@ int main() {
     readFile(memory);
 
     while (1) {
-        pc += 4;
         uint32_t instr = memory[pc];
+        pc += 4;
         uint32_t opcode = instr & 0x7f;
         uint32_t funct3 = (instr >> 12) & 0x3;
         uint32_t funct7 = (instr >> 25) & 0x7F;
@@ -84,12 +84,12 @@ int main() {
                 branch(funct3, imm12, rs1, rs2, reg, pc);
                 break;
             case 0x67: //jalr
-                reg[rd] = reg[rs1] - 4 + imm12;
+                reg[rd] = reg[rs1] + imm12;
                 pc = reg[rd];
                 break;
             case 0x6F: //jal
                 reg[rd] = pc + 4;
-                pc += jimm - 4;
+                pc += jimm;
                 break;
             case 0x73: //ecall
                 ecallVal = ecall(print, printCounter, printOffset, memory, reg);
@@ -220,32 +220,32 @@ void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_
     switch (funct3) {
         case 0: // BEQ
             if(reg[rs1] == reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         case 1: // BNE
             if(reg[rs1] != reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         case 4: // BLT
             if((int)reg[rs1] < (int)reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         case 5: // BGE
             if((int)reg[rs1] >= (int)reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         case 6: // BLTU
             if(reg[rs1] < reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         case 7: // BGEU
             if(reg[rs1] >= reg[rs2]){
-                pc += imm12 - 4;
+                pc += imm12;
             }
             break;
         default:
