@@ -46,10 +46,11 @@ int main() {
         uint32_t rs2 = (instr >> 20) & 0x01f;
         uint32_t imm12 = (instr >> 20);
         uint32_t imm20 = (instr >> 12);
-        uint32_t part1 = (instr >> 12) & 0xFF;
-        uint32_t part2 = (instr >> 20) & 0x3FF;
-        uint32_t part3 = (instr >> 31);
-        uint32_t jimm = part3 << 18 | part1 << 10 | part2; //This might be wrong!!
+        uint32_t part1 = (instr >> 21) & 0x3FF;
+        uint32_t part2 = (instr >> 20) & 0x1;
+        uint32_t part3 = (instr >> 12) & 0xFF;
+        uint32_t part4 = (instr >> 31) & 0x1;
+        uint32_t jimm = (part1 << 1) | (part2 << 11) | (part3 << 12) | (part4 << 20); //This might be wrong!!
         uint32_t imm4_1 = (rd >> 1) & 0xF;
         uint32_t imm10_5 = (funct7) & 0x3F;
         uint32_t imm11_ = rd & 0x1;
@@ -57,6 +58,9 @@ int main() {
         uint32_t offset = (imm4_1 << 1) | (imm10_5 << 5) | (imm11_ << 11) | (imm12_ << 12);
         if ((offset >> 11) & 0x1) {
             offset += 0xFFFFE000;
+        }
+        if((jimm >> 20) & 0x1){
+            jimm += 0xFFE00000;
         }
         uint32_t print;
         int printCounter = 0;
@@ -68,7 +72,7 @@ int main() {
         //printf("imm10_5: %x\n", imm10_5);
         //printf("imm11_: %x\n", imm11_);
         //printf("imm12_: %x\n", imm12_);
-        printf("offset: %x\n", offset);
+        //printf("offset: %x\n", offset);
 
         switch (opcode) {
             case 0x3: //load
@@ -107,6 +111,7 @@ int main() {
                 pc = reg[rd];
                 break;
             case 0x6F: //jal
+                printf("jimm: %x\n", jimm);
                 reg[rd] = pc + 4;
                 pc += jimm - 4;
                 break;
@@ -134,7 +139,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("branchtrap.bin", "rb");
+    FILE *fp = fopen("t1.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -161,7 +166,23 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+            switch (reg[rs1]%4) { //which byte to target
+                case 0:
+                    reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+                    break;
+                case 1:
+                    reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0x0000FF00) >> 0x8;
+                    break;
+                case 2:
+                    reg[rd] = (memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10;
+                    break;
+                case 3:
+                    reg[rd] = (memory[reg[rs1] + imm12] & 0xFF000000) >> 0x18;
+                    break;
+                default:
+                    printf("shouldn't happen");
+            }
+
             if ((reg[rd] >> 7) == 1) {
                 reg[rd] += 0xFFFFFF00;
             }
@@ -170,8 +191,19 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
+            switch (reg[rs1]%2) { //which byte to target
+                case 0:
+                    reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
+                    break;
+                case 1:
+                    reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0xFFFF0000) >> 0x10;
+                    break;
+
+                default:
+                    printf("shouldn't happen");
+            }
             reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
-            if ((reg[rd] >> 7) == 1) {
+            if ((reg[rd] >> 15) == 1) {
                 reg[rd] += 0xFFFF0000;
             }
             break;
@@ -186,7 +218,23 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+            switch (reg[rs1]%4) { //which byte to target
+                case 0:
+                    reg[rd] = (memory[reg[rs1] + imm12] & 0x000000FF) & 0x000000FF;
+                    break;
+                case 1:
+                    reg[rd] = ((memory[reg[rs1] - 1 + imm12] & 0x0000FF00) >> 0x8) & 0x000000FF;
+                    break;
+                case 2:
+                    reg[rd] = ((memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10) & 0x000000FF;
+                    break;
+                case 3:
+                    reg[rd] = ((memory[reg[rs1] + imm12] & 0xFF000000) >> 0x18) & 0x000000FF;
+                    break;
+                default:
+                    printf("shouldn't happen");
+            }
+
             break;
         case 0x5: //LHU Untested
             if ((imm12 >> 11) == 1) {
@@ -208,15 +256,56 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
                 funct7 += 0xFFFFFF80;
             }
             imm = (funct7 << 5) + rd;
+            if(imm >> 11 & 0x1){
+                imm += 0xFFFFF000;
+            }
 
-            memory[reg[rs1] + imm] = (reg[rs2] & 0x000000FF);
+            printf("stored value: %x\n", (reg[rs2] & 0x000000FF));
+            //memory[reg[rs1] + imm] = (reg[rs2] & 0x000000FF);
+
+            switch (reg[rs1]%4) { //which byte to target
+                case 0:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF);
+                    //reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+                    break;
+                case 1:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x8;
+                    //reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0x0000FF00) >> 0x8;
+                    break;
+                case 2:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x10;
+                    //reg[rd] = (memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10;
+                    break;
+                case 3:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x18;
+                    //reg[rd] = (memory[reg[rs1] - 3 + imm12] & 0xFF000000) >> 0x18;
+                    break;
+                default:
+                    printf("shouldn't happen");
+            }
+
+
             break;
         case 0x1: //SH Untested
             if (funct7 >> 6 == 1) {
                 funct7 += 0xFFFFFF80;
             }
             imm = (funct7 << 5) + rd;
-
+            if(imm >> 11 & 0x1){
+                imm += 0xFFFFF000;
+            }
+            switch (reg[rs1]%2) { //which byte to target
+                case 0:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x0000FFFF);
+                    //reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
+                    break;
+                case 1:
+                    memory[reg[rs1] + imm] += (reg[rs2] & 0x0000FFFF) << 0x18;
+                    //reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0x0000FF00) >> 0x8;
+                    break;
+                default:
+                    printf("shouldn't happen");
+            }
             memory[reg[rs1] + imm] = (reg[rs2] & 0x0000FFFF);
             break;
         case 0x2: //SW
@@ -225,6 +314,9 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
             }
 
             imm = (funct7 << 5) + rd;
+            if(imm >> 11 & 0x1){
+                imm += 0xFFFFF000;
+            }
 
             memory[reg[rs1] + imm] = reg[rs2];
             //printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
