@@ -33,7 +33,7 @@ int main() {
     readFile(memory);
 
     while (1) {
-        pc += 4;
+
         uint32_t instr = memory[pc];
         uint32_t opcode = instr & 0x7f;
         uint32_t funct3 = (instr >> 12) & 0x3;
@@ -52,7 +52,7 @@ int main() {
         int printOffset = 0;
         uint32_t ecallVal;
         reg[0] = 0;
-        //printf("\nOpcode: %x\n", opcode);
+        printf("\nOpcode: %x\n", opcode);
 
 
         switch (opcode) {
@@ -78,6 +78,10 @@ int main() {
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x37: //LUI
+                printf("imm20: %d,", imm20);
+                if ((imm20 >> 19) == 1) {
+                    imm20 += 0xFFF00000;
+                }
                 reg[rd] = imm20 << 12; //Think this is right
                 break;
             case 0x63: //Branch
@@ -100,7 +104,7 @@ int main() {
             default:
                 printf("Opcode %x not yet implemented\n", opcode);
         }
-        /*
+
         printf("pc: %x, \tx1: %x,\tx2: %x,\tx3: %x,\tx4: %x,\tx5: %x, \tx6: %x,\tx7: %x,\n",
             pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
         printf("x8: %x, \tx9: %x,\tx10: %x,\tx11: %x,\tx12: %x,\tx13: %x, \tx14: %x,\tx15: %x,\n",
@@ -109,13 +113,13 @@ int main() {
             reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
         printf("x24: %x, \tx25: %x,\tx26: %x,\tx27: %x,\tx28: %x,\tx29: %x, \tx30: %x,\tx31: %x,\n",
             reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
-        */
+        pc += 4;
     }
 }
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("hello.bin", "rb");
+    FILE *fp = fopen("addlarge.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
