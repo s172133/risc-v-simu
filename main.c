@@ -119,7 +119,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("bool.bin", "rb");
+    FILE *fp = fopen("set.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
