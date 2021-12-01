@@ -18,7 +18,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
 void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc);
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *reg);
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t shamt, uint32_t *reg);
 
 uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memory, uint32_t *reg);
 
@@ -60,7 +60,7 @@ int main() {
                 load(imm12, rd, rs1, memory, funct3, reg);
                 break;
             case 0x13: //Immediate
-                immediate(funct3, imm12, rd, rs1, reg);
+                immediate(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x17: //auipc
                 if ((imm20 >> 19) == 1) {
@@ -119,7 +119,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("set.bin", "rb");
+    FILE *fp = fopen("shift2.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -258,13 +258,16 @@ void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_
     }
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t* reg){
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t shamt, uint32_t* reg){
     switch (funct3) {
         case 0: //addi
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
             reg[rd] = reg[rs1] + imm12;
+            break;
+        case 1: //SLLI
+            reg[rd] = (reg[rs1] << (shamt & 0x1F));
             break;
         case 2: //SLTI untested
             if ((imm12 >> 11) == 1) {
@@ -292,6 +295,15 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             }
             reg[rd] = reg[rs1] ^ imm12;
             break;
+        case 5: //SRLI/SRAI
+            if (imm12 >> 10 & 0x1){//SRAI
+                int s = -(reg[rs1] >> 31);
+                reg[rd] = (s^reg[rs1]) >> (shamt & 0x1F) ^ s;
+            } else { //SRLI
+                reg[rd] = (reg[rs1] >> (shamt & 0x1F));
+            }
+            break;
+
         case 6: //ORI untested
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
@@ -305,12 +317,12 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] & imm12;
             break;
         default:
-            printf("Invalid funct3");
+            printf("Invalid funct3\n");
     }
 }
 
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
-    printf("funct3: %d\n", funct3);
+    //printf("funct3: %d\n", funct3);
     switch (funct3) {
         case 0: //add/sub
             if (imm12 >> 10 & 0x1) { //sub
