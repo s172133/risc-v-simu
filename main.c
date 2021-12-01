@@ -11,11 +11,14 @@
 #endif
 
 void readFile(uint32_t *memory);
+
 void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t funct3, uint32_t *reg);
 
 void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *memory,
            uint32_t *reg);
-void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc);
+
+int branch(uint32_t funct3, uint32_t offset, uint32_t rs1, uint32_t rs2, uint32_t *reg, int pc);
+
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg);
 
 void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t shamt, uint32_t *reg);
@@ -26,7 +29,7 @@ int main() {
 
     printf("********** Starting **********\n");
 
-    uint32_t pc = 0; // Program counter
+    int pc = 0; // Program counter
     uint32_t reg[32] = {0}; // Register
     uint32_t *memory = malloc(0xFFFFFFFF * sizeof(uint32_t)); // Allocate binary code
 
@@ -47,13 +50,25 @@ int main() {
         uint32_t part2 = (instr >> 20) & 0x3FF;
         uint32_t part3 = (instr >> 31);
         uint32_t jimm = part3 << 18 | part1 << 10 | part2; //This might be wrong!!
+        uint32_t imm4_1 = (rd >> 1) & 0xF;
+        uint32_t imm10_5 = (funct7) & 0x3F;
+        uint32_t imm11_ = rd & 0x1;
+        uint32_t imm12_ = (funct7 >> 6) & 0x1;
+        uint32_t offset = (imm4_1 << 1) | (imm10_5 << 5) | (imm11_ << 11) | (imm12_ << 12);
+        if ((offset >> 11) & 0x1) {
+            offset += 0xFFFFE000;
+        }
         uint32_t print;
         int printCounter = 0;
         int printOffset = 0;
         uint32_t ecallVal;
         reg[0] = 0;
         printf("\nOpcode: %x\n", opcode);
-
+        //printf("imm4_1: %x\n", imm4_1);
+        //printf("imm10_5: %x\n", imm10_5);
+        //printf("imm11_: %x\n", imm11_);
+        //printf("imm12_: %x\n", imm12_);
+        printf("offset: %x\n", offset);
 
         switch (opcode) {
             case 0x3: //load
@@ -85,7 +100,7 @@ int main() {
                 reg[rd] = imm20 << 12; //Think this is right
                 break;
             case 0x63: //Branch
-                branch(funct3, imm12, rs1, rs2, reg, pc);
+                pc = branch(funct3, offset, rs1, rs2, reg, pc);
                 break;
             case 0x67: //jalr
                 reg[rd] = reg[rs1] - 4 + imm12;
@@ -98,7 +113,7 @@ int main() {
             case 0x73: //ecall
                 ecallVal = ecall(print, printCounter, printOffset, memory, reg);
                 if (ecallVal == 10) return 0;
-                else if (ecallVal == 17) return (int)reg[10];
+                else if (ecallVal == 17) return (int) reg[10];
                 break;
 
             default:
@@ -106,20 +121,20 @@ int main() {
         }
 
         printf("pc: %x, \tx1: %x,\tx2: %x,\tx3: %x,\tx4: %x,\tx5: %x, \tx6: %x,\tx7: %x,\n",
-            pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
+               pc, reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]);
         printf("x8: %x, \tx9: %x,\tx10: %x,\tx11: %x,\tx12: %x,\tx13: %x, \tx14: %x,\tx15: %x,\n",
-            reg[8], reg[9], reg[10], reg[11], reg[12], reg[13], reg[14], reg[15]);
+               reg[8], reg[9], reg[10], reg[11], reg[12], reg[13], reg[14], reg[15]);
         printf("x16: %x, \tx17: %x,\tx18: %x,\tx19: %x,\tx20: %x,\tx21: %x, \tx22 %x,\tx23: %x,\n",
-            reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
+               reg[16], reg[17], reg[18], reg[19], reg[20], reg[21], reg[22], reg[23]);
         printf("x24: %x, \tx25: %x,\tx26: %x,\tx27: %x,\tx28: %x,\tx29: %x, \tx30: %x,\tx31: %x,\n",
-            reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
+               reg[24], reg[25], reg[26], reg[27], reg[28], reg[29], reg[30], reg[31]);
         pc += 4;
     }
 }
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("shift2.bin", "rb");
+    FILE *fp = fopen("branchtrap.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -220,45 +235,46 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
 }
 
 
-void branch(uint32_t funct3, uint32_t imm12, uint32_t rs1, uint32_t rs2, uint32_t* reg, uint32_t* pc) {
+int branch(uint32_t funct3, uint32_t offset, uint32_t rs1, uint32_t rs2, uint32_t *reg, int pc) {
     switch (funct3) {
         case 0: // BEQ
-            if(reg[rs1] == reg[rs2]){
-                pc += imm12 - 4;
+            if (reg[rs1] == reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         case 1: // BNE
-            if(reg[rs1] != reg[rs2]){
-                pc += imm12 - 4;
+            if (reg[rs1] != reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         case 4: // BLT
-            if((int)reg[rs1] < (int)reg[rs2]){
-                pc += imm12 - 4;
+            if ((int) reg[rs1] < (int) reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         case 5: // BGE
-            if((int)reg[rs1] >= (int)reg[rs2]){
-                pc += imm12 - 4;
+            if ((int) reg[rs1] >= (int) reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         case 6: // BLTU
-            if(reg[rs1] < reg[rs2]){
-                pc += imm12 - 4;
+            if (reg[rs1] < reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         case 7: // BGEU
-            if(reg[rs1] >= reg[rs2]){
-                pc += imm12 - 4;
+            if (reg[rs1] >= reg[rs2]) {
+                pc += offset - 4;
             }
             break;
         default:
             printf("bad branch\n");
             break;
     }
+    return pc;
 }
 
-void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t shamt, uint32_t* reg){
+void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t shamt, uint32_t *reg) {
     switch (funct3) {
         case 0: //addi
             if ((imm12 >> 11) == 1) {
@@ -273,7 +289,7 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            if ((int)reg[rs1] < (int)imm12) {
+            if ((int) reg[rs1] < (int) imm12) {
                 reg[rd] = 1;
             } else {
                 reg[rd] = 0;
@@ -296,9 +312,9 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
             reg[rd] = reg[rs1] ^ imm12;
             break;
         case 5: //SRLI/SRAI
-            if (imm12 >> 10 & 0x1){//SRAI
+            if (imm12 >> 10 & 0x1) {//SRAI
                 int s = -(reg[rs1] >> 31);
-                reg[rd] = (s^reg[rs1]) >> (shamt & 0x1F) ^ s;
+                reg[rd] = (s ^ reg[rs1]) >> (shamt & 0x1F) ^ s;
             } else { //SRLI
                 reg[rd] = (reg[rs1] >> (shamt & 0x1F));
             }
@@ -356,7 +372,8 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
             break;
         case 5: //SRL/SRA
             if (imm12 >> 10 & 0x1) { //SRA   Arithmetic right shift
-                reg[rd] = (reg[rs1] >> (reg[rs2] & 0x1F)) | (reg[rs1] << (32 - (reg[rs2] & 0x1F))); // Might not be right
+                reg[rd] =
+                        (reg[rs1] >> (reg[rs2] & 0x1F)) | (reg[rs1] << (32 - (reg[rs2] & 0x1F))); // Might not be right
             } else { //SRL      Logical right shift
                 reg[rd] = reg[rs1] >> (reg[rs2] & 0x1F);
             }
@@ -396,7 +413,7 @@ uint32_t ecall(uint32_t print, int printCounter, int printOffset, uint32_t *memo
         case 11: //printChar
             printf("%c", reg[10]);
             break;
-        //case 17: //Exit with exit code doesn't need case since check is performed elsewhere
+            //case 17: //Exit with exit code doesn't need case since check is performed elsewhere
         default:
             break;
     }
