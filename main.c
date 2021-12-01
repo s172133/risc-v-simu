@@ -36,7 +36,7 @@ int main() {
 
         uint32_t instr = memory[pc];
         uint32_t opcode = instr & 0x7f;
-        uint32_t funct3 = (instr >> 12) & 0x3;
+        uint32_t funct3 = (instr >> 12) & 0x7;
         uint32_t funct7 = (instr >> 25) & 0x7F;
         uint32_t rd = (instr >> 7) & 0x01f;
         uint32_t rs1 = (instr >> 15) & 0x01f;
@@ -78,7 +78,7 @@ int main() {
                 intergerOp(funct3, imm12, rd, rs1, rs2, reg);
                 break;
             case 0x37: //LUI
-                printf("imm20: %d,", imm20);
+                //printf("imm20: %d,", imm20);
                 if ((imm20 >> 19) == 1) {
                     imm20 += 0xFFF00000;
                 }
@@ -119,7 +119,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("addlarge.bin", "rb");
+    FILE *fp = fopen("bool.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -310,6 +310,7 @@ void immediate(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint3
 }
 
 void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t rs2, uint32_t *reg) {
+    printf("funct3: %d\n", funct3);
     switch (funct3) {
         case 0: //add/sub
             if (imm12 >> 10 & 0x1) { //sub
@@ -339,6 +340,7 @@ void intergerOp(uint32_t funct3, uint32_t imm12, uint32_t rd, uint32_t rs1, uint
             break;
         case 4: //XOR
             reg[rd] = reg[rs1] ^ reg[rs2]; //Not tested
+            printf("reg[rs1]: %b, \t reg[rs2]: %b\n", reg[rs1], reg[rs2]);
             break;
         case 5: //SRL/SRA
             if (imm12 >> 10 & 0x1) { //SRA   Arithmetic right shift
