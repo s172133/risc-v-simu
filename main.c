@@ -139,7 +139,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("t1.bin", "rb");
+    FILE *fp = fopen("t15.bin", "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
@@ -177,7 +177,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                     reg[rd] = (memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10;
                     break;
                 case 3:
-                    reg[rd] = (memory[reg[rs1] + imm12] & 0xFF000000) >> 0x18;
+                    reg[rd] = (memory[reg[rs1] - 3 + imm12] & 0xFF000000) >> 0x18;
                     break;
                 default:
                     printf("shouldn't happen");
