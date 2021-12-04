@@ -135,7 +135,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    char str[] = "t11.bin";
+    char str[] = "t14.bin";
     printf("\nRunning simulator with %s\n" ,str);
     FILE *fp = fopen(str, "rb");
     if (fp == NULL) {
@@ -152,6 +152,7 @@ void readFile(uint32_t *memory) {
     while (word != EOF) {
         //printf("%x\n", word);
         memory[i] = word;
+        printf("adress: %x: \t %x\n", i, memory[i]);
         i += 4;
         word = getw(fp);
     }
@@ -166,6 +167,8 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             }
             switch (reg[rs1]%4) { //which byte to target
                 case 0:
+                    printf("Load byte: %x\n", reg[rs1+1]);
+                    printf("Value: %x\n", memory[reg[rs1]]);
                     reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
                     break;
                 case 1:
