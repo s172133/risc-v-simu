@@ -135,7 +135,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    char str[] = "width.bin";
+    char str[] = "t11.bin";
     printf("\nRunning simulator with %s\n" ,str);
     FILE *fp = fopen(str, "rb");
     if (fp == NULL) {
@@ -195,6 +195,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                     break;
                 case 1:
                     reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0xFFFF0000) >> 0x10;
+                    printf("test %x\n", reg[rs1] - 1 + imm12);
                     break;
 
                 default:
@@ -238,17 +239,8 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            switch (reg[rs1]%2) { //which byte to target
-                case 0:
-                    reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
-                    break;
-                case 1:
-                    reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0xFFFF0000) >> 0x10;
-                    break;
+            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
 
-                default:
-                    printf("shouldn't happen");
-            }
             break;
         default:
             printf("Invalid funct3");
