@@ -139,7 +139,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    char str[] = "t12.bin";
+    char str[] = "width.bin";
     printf("\nRunning simulator with %s\n" ,str);
     FILE *fp = fopen(str, "rb");
     if (fp == NULL) {
@@ -259,7 +259,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
                 imm += 0xFFFFF000;
             }
 
-            printf("stored value: %x\n", (reg[rs2] & 0x000000FF));
+            //printf("stored value: %x\n", (reg[rs2] & 0x000000FF));
             //memory[reg[rs1] + imm] = (reg[rs2] & 0x000000FF);
 
             switch (reg[rs1]%4) { //which byte to target
@@ -311,7 +311,7 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
             }
 
             memory[reg[rs1] + imm] = reg[rs2];
-            printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
+            //printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
             break;
         default:
             printf("Invalid funct3");
