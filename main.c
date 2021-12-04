@@ -139,7 +139,9 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    FILE *fp = fopen("t15.bin", "rb");
+    char str[] = "t15.bin";
+    printf("\nRunning simulator with %s\n" ,str);
+    FILE *fp = fopen(str, "rb");
     if (fp == NULL) {
         perror("Unable to open file!");
         exit(1);
