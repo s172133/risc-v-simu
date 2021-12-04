@@ -139,7 +139,7 @@ int main() {
 
 void readFile(uint32_t *memory) {
     // OPEN FILE
-    char str[] = "t15.bin";
+    char str[] = "t12.bin";
     printf("\nRunning simulator with %s\n" ,str);
     FILE *fp = fopen(str, "rb");
     if (fp == NULL) {
@@ -254,9 +254,6 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
     uint32_t imm;
     switch (funct3) {
         case 0x0: //SB Untested
-            if (funct7 >> 6 == 1) {
-                funct7 += 0xFFFFFF80;
-            }
             imm = (funct7 << 5) + rd;
             if(imm >> 11 & 0x1){
                 imm += 0xFFFFF000;
@@ -289,9 +286,6 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
 
             break;
         case 0x1: //SH Untested
-            if (funct7 >> 6 == 1) {
-                funct7 += 0xFFFFFF80;
-            }
             imm = (funct7 << 5) + rd;
             if(imm >> 11 & 0x1){
                 imm += 0xFFFFF000;
@@ -311,17 +305,13 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
             memory[reg[rs1] + imm] = (reg[rs2] & 0x0000FFFF);
             break;
         case 0x2: //SW
-            if (funct7 >> 6 == 1) {
-                funct7 += 0xFFFFFF80;
-            }
-
             imm = (funct7 << 5) + rd;
             if(imm >> 11 & 0x1){
                 imm += 0xFFFFF000;
             }
 
             memory[reg[rs1] + imm] = reg[rs2];
-            //printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
+            printf("Value saved: %x, at %x\n", memory[reg[rs1] + imm], reg[rs1] + imm);
             break;
         default:
             printf("Invalid funct3");
