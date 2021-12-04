@@ -68,11 +68,7 @@ int main() {
         uint32_t ecallVal;
         reg[0] = 0;
         printf("\nOpcode: %x\n", opcode);
-        //printf("imm4_1: %x\n", imm4_1);
-        //printf("imm10_5: %x\n", imm10_5);
-        //printf("imm11_: %x\n", imm11_);
-        //printf("imm12_: %x\n", imm12_);
-        //printf("offset: %x\n", offset);
+
 
         switch (opcode) {
             case 0x3: //load
@@ -231,7 +227,7 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
                     reg[rd] = ((memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10) & 0x000000FF;
                     break;
                 case 3:
-                    reg[rd] = ((memory[reg[rs1] + imm12] & 0xFF000000) >> 0x18) & 0x000000FF;
+                    reg[rd] = ((memory[reg[rs1] - 3 + imm12] & 0xFF000000) >> 0x18) & 0x000000FF;
                     break;
                 default:
                     printf("shouldn't happen");
@@ -242,7 +238,17 @@ void load(uint32_t imm12, uint32_t rd, uint32_t rs1, uint32_t *memory, uint32_t 
             if ((imm12 >> 11) == 1) {
                 imm12 += 0xFFFFF000;
             }
-            reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
+            switch (reg[rs1]%2) { //which byte to target
+                case 0:
+                    reg[rd] = memory[reg[rs1] + imm12] & 0x0000FFFF;
+                    break;
+                case 1:
+                    reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0xFFFF0000) >> 0x10;
+                    break;
+
+                default:
+                    printf("shouldn't happen");
+            }
             break;
         default:
             printf("Invalid funct3");
@@ -265,19 +271,15 @@ void store(uint32_t funct3, uint32_t funct7, uint32_t rd, uint32_t rs1, uint32_t
             switch (reg[rs1]%4) { //which byte to target
                 case 0:
                     memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF);
-                    //reg[rd] = memory[reg[rs1] + imm12] & 0x000000FF;
                     break;
                 case 1:
-                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x8;
-                    //reg[rd] = (memory[reg[rs1] - 1 + imm12] & 0x0000FF00) >> 0x8;
+                    memory[reg[rs1] - 1 + imm] += (reg[rs2] & 0x000000FF) << 0x8;
                     break;
                 case 2:
-                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x10;
-                    //reg[rd] = (memory[reg[rs1] - 2 + imm12] & 0x00FF0000) >> 0x10;
+                    memory[reg[rs1] - 2 + imm] += (reg[rs2] & 0x000000FF) << 0x10;
                     break;
                 case 3:
-                    memory[reg[rs1] + imm] += (reg[rs2] & 0x000000FF) << 0x18;
-                    //reg[rd] = (memory[reg[rs1] - 3 + imm12] & 0xFF000000) >> 0x18;
+                    memory[reg[rs1] - 3 + imm] += (reg[rs2] & 0x000000FF) << 0x18;
                     break;
                 default:
                     printf("shouldn't happen");
